@@ -4,7 +4,7 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Standby Masjid dengan Mode Shalat Otomatis</title>
+    <title>Display Standby Masjid dengan Mode Sholat Otomatis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
                 <div>
                     <!-- EDIT NAMA JUDUL PANEL ADMIN -->
                     <h1 class="text-xl font-bold text-slate-100 leading-tight">Pengaturan Display Masjid</h1>
-                    <p class="text-xs text-emerald-400 font-medium">Saat Jam Shalat: Slideshow & Running Text Otomatis Sembunyi</p>
+                    <p class="text-xs text-emerald-400 font-medium">Saat Jam Sholat: Slideshow & Running Text Otomatis Sembunyi</p>
                 </div>
             </div>
 
@@ -120,12 +120,12 @@
             </div>
         </div>
 
-        <!-- MANAGE JADWAL IMAM & JAM SHALAT -->
+        <!-- MANAGE JADWAL IMAM & JAM SHOLAT -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-days text-emerald-400"></i> Kelola Jam Shalat & Petugas Imam
+                        <i class="fa-solid fa-calendar-days text-emerald-400"></i> Kelola Jam Sholat & Petugas Imam
                     </h2>
                     <p class="text-xs text-slate-400 mt-1">Jadwal Imam aktif 15 menit sebelum hingga 15 menit setelah jam shalat.</p>
                 </div>
@@ -244,7 +244,7 @@
             <i class="fa-solid fa-xmark text-xl"></i>
         </button>
 
-        <!-- KONTEN TV: SLIDESHOW & JADWAL SHALAT -->
+        <!-- KONTEN TV: SLIDESHOW & JADWAL SHOLAT -->
         <div class="relative w-full h-full flex items-center justify-center bg-slate-950">
             
         <!-- SLIDESHOW Gambar Standby -->
@@ -265,7 +265,7 @@
 
 		</div>
 
-            <!-- PANEL JADWAL PETUGAS SHALAT (Tampil Saat Jam Shalat Tiba) -->
+            <!-- PANEL JADWAL PETUGAS SHOLAT (Tampil Saat Jam Sholat Tiba) -->
 <!-- UBAH: Menambahkan 'w-full px-12' pada kontainer paling luar agar memiliki ruang gerak -->
 <div id="display-jadwal-container" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center p-8 bg-slate-950/95 backdrop-blur-md transition-all duration-500 w-full px-12" style="zoom: 2.5;">
     
@@ -275,12 +275,12 @@
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-kaaba text-amber-400 text-3xl"></i>
                 <div>
-                    <h2 class="text-2xl font-bold text-white uppercase tracking-wider">JADWAL PETUGAS SHALAT</h2>
-                    <p class="text-xs text-emerald-400 font-medium">Memasuki Rentang Waktu Shalat</p>
+                    <h2 class="text-2xl font-bold text-white uppercase tracking-wider">JADWAL PETUGAS SHOLAT</h2>
+                    <p class="text-xs text-emerald-400 font-medium">Memasuki Rentang Waktu Sholat</p>
                 </div>
             </div>
             <span class="text-xs bg-amber-400 text-slate-950 px-4 py-1.5 rounded-full font-black animate-pulse uppercase tracking-wider">
-                <i class="fa-solid fa-bell"></i> Waktu Shalat Tiba
+                <i class="fa-solid fa-bell"></i> Waktu Sholat Tiba
             </span>
         </div>
 
@@ -326,7 +326,7 @@
         let isSimulationActive = false;
 
         // ========================================================
-        // EDIT DEFAULT JADWAL SHALAT & PETUGAS IMAM PER HARI DI SINI
+        // EDIT DEFAULT JADWAL SHOLAT & PETUGAS IMAM PER HARI DI SINI
         // 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jum’at, 6=Sabtu, 0=Ahad
         // ========================================================
         const defaultJadwal = {
@@ -437,7 +437,7 @@ if (p) {
     row.className = `p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 transition-all bg-emerald-950/90 border-2 border-emerald-400 shadow-xl w-full`;
 
     row.innerHTML = `
-        <!-- Bagian Kiri: Nama Shalat -->
+        <!-- Bagian Kiri: Nama Sholat -->
         <div class="flex items-center gap-4 min-w-[150px] self-start sm:self-center">
             <span class="w-4 h-4 rounded-full bg-amber-400 animate-ping"></span>
             <div>
@@ -467,7 +467,7 @@ if (p) {
     `;
     listContainer.appendChild(row);
 } else {
-    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu shalat berikutnya...</div>`;
+    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu sholat berikutnya...</div>`;
 }
 
 // =================================
@@ -537,7 +537,7 @@ if (p) {
 
                 if (statusEl) {
                     statusEl.className = "text-xs font-bold text-emerald-400";
-                    statusEl.innerText = `MODE SHALAT (${activePrayer}) - Slide & Running Text Mati`;
+                    statusEl.innerText = `MODE SHOLAT (${activePrayer}) - Slide & Running Text Mati`;
                 }
             } else {
                 if (containerSlideshow) containerSlideshow.classList.remove('hidden');
@@ -567,7 +567,7 @@ if (p) {
             listContainer.innerHTML = '';
             const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
 
-            // Mengambil hanya 1 waktu shalat yang sedang aktif/tiba
+            // Mengambil hanya 1 waktu sholat yang sedang aktif/tiba
 const p = highlightPrayer; 
 
 if (p) {
@@ -578,7 +578,7 @@ if (p) {
     row.className = `p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 transition-all bg-emerald-950/90 border-2 border-emerald-400 shadow-xl w-full`;
 
     row.innerHTML = `
-        <!-- Bagian Kiri: Nama Shalat & Jam Adzan (Diperbesar) -->
+        <!-- Bagian Kiri: Nama Sholat & Jam Adzan (Diperbesar) -->
         <div class="flex items-center gap-4 min-w-[180px]">
             <span class="w-4 h-4 rounded-full bg-amber-400 animate-ping"></span>
             <div>
@@ -604,7 +604,7 @@ if (p) {
     listContainer.appendChild(row);
 } else {
     // Pengaman jika highlightPrayer kosong/tidak terdeteksi
-    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu shalat berikutnya...</div>`;
+    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu sholat berikutnya...</div>`;
 }
 
         }
