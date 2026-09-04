@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Standby Masjid dengan Mode Shalat Otomatis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+	<style>
+        body { font-family: 'Poppins', sans-serif; }
+        .running-text-container { overflow: hidden; white-space: nowrap; }
+        .running-text-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 28s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+		
+				
+	</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- ======================================================== -->
+    <!-- TOP NAVBAR / HEADER PANEL ADMIN                          -->
+    <!-- ======================================================== -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl">
+                    <i class="fa-solid fa-mosque"></i>
+                </div>
+                <div>
+                    <!-- EDIT NAMA JUDUL PANEL ADMIN -->
+                    <h1 class="text-xl font-bold text-slate-100 leading-tight">Pengaturan Display Masjid</h1>
+                    <p class="text-xs text-emerald-400 font-medium">Saat Jam Shalat: Slideshow & Running Text Otomatis Sembunyi</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-toggle-view" onclick="toggleMode('display')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-900/30 transition flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-tv"></i> Putar Display (TV Fullscreen)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ======================================================== -->
+    <!-- KONTEN UTAMA PANEL ADMIN                                 -->
+    <!-- ======================================================== -->
+    <main id="admin-panel" class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- PANEL SIMULASI WAKTU -->
+        <div class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border-2 border-amber-500/40 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-vial text-xl"></i> Panel Simulasi Jam Layar
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">Gunakan panel ini untuk menguji kemunculan jadwal imam & hilangnya slideshow/running text.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetSimulationTime()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition border border-slate-700">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Kembali ke Jam Asli
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center bg-slate-950 p-4 rounded-xl border border-amber-500/20">
+                <div>
+                    <span class="text-xs text-slate-400 uppercase font-bold tracking-wider block mb-1">Status Simulasi</span>
+                    <span id="sim-status-badge" class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-bold inline-block">
+                        Menggunakan Jam Realtime
+                    </span>
+                </div>
+                <div>
+                    <label class="text-xs text-amber-300 font-bold block mb-1">Atur Jam Simulasi Display:</label>
+                    <input type="time" id="sim-time-input" class="bg-slate-900 border-2 border-amber-500/60 text-amber-300 text-lg font-mono font-bold rounded-xl px-3 py-1.5 w-full focus:outline-none focus:border-amber-400" onchange="applySimulatedTime(this.value)">
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 uppercase font-bold tracking-wider block mb-1">Status Mode Layar Saat Ini</span>
+                    <span id="sim-widget-status" class="text-xs font-bold text-slate-400">Menghitung...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATISTIK BANNER -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+                <div class="p-4 bg-emerald-500/10 text-emerald-400 rounded-xl text-2xl">
+                    <i class="fa-solid fa-images"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Total Slide Gambar</span>
+                    <h3 id="stat-total" class="text-2xl font-bold text-slate-100">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+                <div class="p-4 bg-amber-500/10 text-amber-400 rounded-xl text-2xl">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="flex-grow">
+                    <span class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Durasi Pergantian Slide</span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <input type="number" id="slide-duration" value="7" min="1" max="60" oninput="updateDuration(this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-center text-sm font-bold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        <span class="text-xs text-slate-400">detik</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MANAGE JADWAL IMAM & JAM SHALAT -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days text-emerald-400"></i> Kelola Jam Shalat & Petugas Imam
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Jadwal Imam aktif 15 menit sebelum hingga 15 menit setelah jam shalat.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetDefaultJadwal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate"></i> Reset Default
+                    </button>
+                    <button onclick="saveJadwalImam()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABS HARI -->
+            <div class="flex gap-2 overflow-x-auto pb-2 border-b border-slate-800" id="day-tabs"></div>
+
+            <!-- FORM EDIT JADWAL -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 id="active-day-title" class="text-md font-bold text-emerald-400 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-check"></i> Jadwal Hari
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3" id="prayer-time-inputs"></div>
+            </div>
+        </div>
+
+        <!-- UPLOAD GAMBAR -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Upload Gambar Background Standby
+            </h2>
+
+            <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/70 bg-slate-950/50 hover:bg-slate-950 rounded-2xl p-8 text-center transition cursor-pointer group relative">
+                <input type="file" id="image-input" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)">
+                <div class="space-y-3 pointer-events-none">
+                    <div class="w-16 h-16 bg-slate-800 group-hover:bg-emerald-500/20 text-slate-400 group-hover:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto transition text-2xl">
+                        <i class="fa-solid fa-file-image"></i>
+                    </div>
+                    <div>
+                        <p class="text-base font-medium text-slate-200">Klik atau seret gambar ke sini</p>
+                        <p class="text-xs text-slate-400 mt-1">Format JPG, PNG, WEBP</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAFTAR GAMBAR AKTIF -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-emerald-400"></i> Daftar Slide Gambar Aktif
+                </h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="clearAllImages()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Semua
+                    </button>
+                    <button onclick="loadSampleImages()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Contoh Slide
+                    </button>
+                </div>
+            </div>
+
+            <div id="image-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2"></div>
+            <div id="empty-state" class="hidden py-12 text-center space-y-3">
+                <p class="text-slate-400 text-sm">Belum ada gambar yang diunggah.</p>
+            </div>
+        </div>
+
+        <!-- KONFIGURASI RUNNING TEXT -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-3">
+            <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-amber-400"></i> Teks Berjalan (Running Text)
+            </h2>
+            <div class="flex gap-2">
+                <!-- EDIT RUNNING TEXT DEFAULT DI VALUE INPUT -->
+                <input type="text" id="running-text-input" value="Masjid AL-MUSLIM. Tuluskan Niat, Tegakkan Sholat." class="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                <button onclick="saveRunningText()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-sm font-semibold rounded-xl transition">
+                    Simpan
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- MODE DISPLAY TV FULLSCREEN                                -->
+    <!-- ======================================================== -->
+    <div id="display-mode" class="fixed inset-0 bg-slate-950 z-50 hidden flex-col justify-between overflow-hidden">
+        
+        <!-- HEADER MODE TV -->
+        <div class="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/95 via-black/60 to-transparent p-8 md:p-10 flex justify-between items-start pointer-events-none">
+            <div class="flex items-center gap-6">
+                <div class="w-20 h-20 rounded-2xl bg-emerald-600/90 backdrop-blur-md border border-emerald-400/40 flex items-center justify-center text-white text-4xl shadow-2xl">
+                    <i class="fa-solid fa-mosque"></i>
+                </div>
+                <div class="drop-shadow-lg">
+                    <!-- EDIT NAMA MASJID TV DISPLAY -->
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-wider">MASJID AL-MUSLIM</h2>
+                    <!-- EDIT TANGGAL HIJRIAH DEFAULT -->
+                    <p id="live-hijri-date" class="text-emerald-300 font-semibold text-lg md:text-xl mt-1">12 Safar 1448 H</p>
+                </div>
+            </div>
+
+            <!-- JAM & TANGGAL REALTIME TV -->
+            <div class="flex items-start gap-4">
+                <div class="text-right bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-8 py-4 rounded-3xl shadow-2xl">
+                    <div id="live-clock" class="text-5xl md:text-6xl font-black text-white tracking-widest font-mono">00:00:00</div>
+                    <div id="live-date" class="text-sm md:text-base text-emerald-300 font-semibold mt-1">Kamis, 20 Agustus 2026</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOMBOL KELUAR MODE TV (ESC) -->
+        <button onclick="toggleMode('admin')" class="absolute top-8 right-8 z-30 w-12 h-12 bg-black/60 hover:bg-black/90 border border-white/30 text-white rounded-full flex items-center justify-center transition opacity-0 hover:opacity-100" title="Keluar Mode Display (ESC)">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+
+        <!-- KONTEN TV: SLIDESHOW & JADWAL SHALAT -->
+        <div class="relative w-full h-full flex items-center justify-center bg-slate-950">
+            
+        <!-- SLIDESHOW Gambar Standby -->
+		<!-- Kontainer Utama: Tetap 100% penuh layar TV -->
+		<div id="display-slideshow-container" class="relative w-screen h-screen flex items-center justify-center overflow-hidden bg-black"> 
+  
+		<!-- Gambar: Otomatis pas di tengah dengan ukuran maksimal 90% dari lebar/tinggi layar -->
+			<img id="display-img" 
+			src="" 
+			alt="Standby Slide" 
+			class="absolute max-w-[82%] max-h-[82%] w-auto h-auto object-contain transition-opacity duration-300 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"> 
+  
+		<!-- Pesan jika gambar kosong -->
+			<div id="display-empty-msg" class="hidden text-center space-y-4 absolute z-10"> 
+				<i class="fa-solid fa-images text-8xl text-slate-600"></i> 
+				<p class="text-slate-400 text-2xl font-medium">Tidak ada gambar standby.</p> 
+			</div> 
+
+		</div>
+
+            <!-- PANEL JADWAL PETUGAS SHALAT (Tampil Saat Jam Shalat Tiba) -->
+<!-- UBAH: Menambahkan 'w-full px-12' pada kontainer paling luar agar memiliki ruang gerak -->
+<div id="display-jadwal-container" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center p-8 bg-slate-950/95 backdrop-blur-md transition-all duration-500 w-full px-12" style="zoom: 2.5;">
+    
+    <!-- UBAH: Menggunakan 'w-full min-w-[max-content]' agar kotak luar dipaksa melar mengikuti isi di dalamnya -->
+    <div class="w-full min-w-[max-content] bg-slate-900 border-2 border-emerald-500/80 rounded-3xl p-8 shadow-2xl space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-4 gap-12">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-kaaba text-amber-400 text-3xl"></i>
+                <div>
+                    <h2 class="text-2xl font-bold text-white uppercase tracking-wider">JADWAL PETUGAS SHALAT</h2>
+                    <p class="text-xs text-emerald-400 font-medium">Memasuki Rentang Waktu Shalat</p>
+                </div>
+            </div>
+            <span class="text-xs bg-amber-400 text-slate-950 px-4 py-1.5 rounded-full font-black animate-pulse uppercase tracking-wider">
+                <i class="fa-solid fa-bell"></i> Waktu Shalat Tiba
+            </span>
+        </div>
+
+        <!-- Tetap menggunakan block w-full -->
+        <div class="block w-full space-y-4" id="display-jadwal-list"></div>
+    </div>
+</div>
+
+<!-- Tambahan CSS di paling bawah -->
+<style>
+    #display-jadwal-list > div {
+        width: max-content !important;
+        min-width: 100% !important;
+        padding-right: 3rem !important;
+    }
+</style>
+
+        <!-- RUNNING TEXT TV DISPLAY -->
+        <div id="display-running-bar" class="absolute bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 text-amber-300 py-4 px-6 flex items-center gap-6 transition-all duration-500">
+            <div class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-lg text-sm md:text-base uppercase tracking-wider flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-bullhorn text-lg"></i> Info
+            </div>
+            <div class="running-text-container flex-grow text-xl md:text-2xl font-semibold tracking-wide">
+                <!-- EDIT TEXT BERJALAN DEFAULT DI SINI -->
+                <div id="display-running-text" class="running-text-content">
+                    Masjid AL-MUSLIM. Tuluskan Niat, Tegakkan Sholat.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- JAVASCRIPT LOGIC (BISA DI-EDIT DATA DEFAULT-NYA DI SINI)  -->
+    <!-- ======================================================== -->
+    <script>
+        let imagesList = [];
+        let currentSlideIndex = 0;
+        let slideTimer = null;
+        let slideDuration = 7; // Durasi slide bawaan (detik)
+        let activeEditDayIndex = new Date().getDay();
+
+        let timeOffsetMinutes = 0; 
+        let isSimulationActive = false;
+
+        // ========================================================
+        // EDIT DEFAULT JADWAL SHALAT & PETUGAS IMAM PER HARI DI SINI
+        // 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jum’at, 6=Sabtu, 0=Ahad
+        // ========================================================
+        const defaultJadwal = {
+            1: { dayName: 'Senin', Subuh: { time: '04:35', imam: 'Umar Khayam', badal1: 'L. Taufan Hidjaz', badal2: 'Asep J.' }, Dzuhur: { time: '12:00', imam: 'Fauzi Djakfar', badal1: 'Edi Supiadi', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'Fauzi Djakfar', badal1: 'Edi Supiadi', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'Asep J.', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' }, Isya: { time: '19:15', imam: 'Asep J.', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' } },
+            2: { dayName: 'Selasa', Subuh: { time: '04:35', imam: 'M. Syukron', badal1: 'L. Taufan Hidjaz', badal2: 'Asep J.' }, Dzuhur: { time: '12:00', imam: 'Edi Supiadi', badal1: 'Fauzi Djakfar', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'Edi Supiadi', badal1: 'Fauzi Djakfar', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'M. Syukron', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' }, Isya: { time: '19:15', imam: 'M. Syukron', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' } },
+            3: { dayName: 'Rabu', Subuh: { time: '04:35', imam: 'M. Syukron', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' }, Dzuhur: { time: '12:00', imam: 'Fauzon M. Noor', badal1: 'Roni KP', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'Fauzon M. Noor', badal1: 'Roni KP', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'M. Syukron', badal1: 'Avif Haryana', badal2: 'Aijub Muchtar' }, Isya: { time: '19:15', imam: 'M. Syukron', badal1: 'Aijub Muchtar', badal2: 'Asep J.' } },
+            4: { dayName: 'Kamis', Subuh: { time: '04:35', imam: 'M. Syukron', badal1: 'Avif Haryana', badal2: 'L. Taufan Hidjaz' }, Dzuhur: { time: '12:00', imam: 'Muhammad Arif', badal1: 'Nur Hassim Rusdi', badal2: 'Fauzi Djakfar' }, Ashar: { time: '15:15', imam: 'Muhammad Arif', badal1: 'Nur Hassim Rusdi', badal2: 'Fauzi Djakfar' }, Maghrib: { time: '18:05', imam: 'Malik Syddiq Arrasyid', badal1: 'Avif Haryana', badal2: 'L. Taufan Hidjaz' }, Isya: { time: '19:15', imam: 'Malik Syddiq Arrasyid', badal1: 'Avif Haryana', badal2: 'L. Taufan Hidjaz' } },
+            5: { dayName: 'Jum’at', Subuh: { time: '04:35', imam: 'M. Syukron', badal1: 'Avif Haryana', badal2: 'Aijub Muchtar' }, Dzuhur: { time: '12:00', imam: 'Khotib Jum’at', badal1: 'Badal Khotib', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'Roni KP', badal1: 'L. Taufan Hidjaz', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'Abdil Ramadhan', badal1: 'Afryanto Try Haryadi', badal2: 'Nur Hassim Rusdi' }, Isya: { time: '19:15', imam: 'Abdil Ramadhan', badal1: 'Afryanto Try Haryadi', badal2: 'Nur Hassim Rusdi' } },
+            6: { dayName: 'Sabtu', Subuh: { time: '04:35', imam: 'Afryanto Try Haryadi', badal1: 'L. Taufan Hidjaz', badal2: 'Aijub Muchtar' }, Dzuhur: { time: '12:00', imam: 'Malik Syddiq Arrasyid', badal1: 'Fauzi Djakfar', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'Malik Syddiq Arrasyid', badal1: 'Fauzi Djakfar', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'Afryanto Try Haryadi', badal1: 'Aijub Muchtar', badal2: 'L. Taufan Hidjaz' }, Isya: { time: '19:15', imam: 'Afryanto Try Haryadi', badal1: 'Aijub Muchtar', badal2: 'Asep J.' } },
+            0: { dayName: 'Ahad', Subuh: { time: '04:35', imam: 'Malik Syddiq Arrasyid', badal1: 'L. Taufan Hidjaz', badal2: 'Aijub Muchtar' }, Dzuhur: { time: '12:00', imam: 'L. Taufan Hidjaz', badal1: 'Fauzon M. Noor', badal2: 'Nur Hassim Rusdi' }, Ashar: { time: '15:15', imam: 'L. Taufan Hidjaz', badal1: 'Fauzon M. Noor', badal2: 'Nur Hassim Rusdi' }, Maghrib: { time: '18:05', imam: 'Sonny Khoeroni', badal1: 'L. Taufan Hidjaz', badal2: 'Asep J.' }, Isya: { time: '19:15', imam: 'Sonny Khoeroni', badal1: 'L. Taufan Hidjaz', badal2: 'Asep J.' } }
+        };
+
+        let jadwalData = {};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadSavedData();
+            startLiveClock();
+            renderGallery();
+            renderDayTabs();
+            renderPrayerTimeInputs();
+            checkAndTogglePrayerWidget();
+        });
+
+        function getEffectiveDate() {
+            const now = new Date();
+            if (isSimulationActive) {
+                return new Date(now.getTime() + (timeOffsetMinutes * 60000));
+            }
+            return now;
+        }
+
+        function applySimulatedTime(timeValue) {
+            if (!timeValue) return;
+            const [simHour, simMin] = timeValue.split(':').map(Number);
+            const now = new Date();
+            const targetSimTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), simHour, simMin, 0);
+
+            timeOffsetMinutes = Math.round((targetSimTime.getTime() - now.getTime()) / 60000);
+            isSimulationActive = true;
+
+            document.getElementById('sim-status-badge').className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full font-bold inline-block animate-pulse";
+            document.getElementById('sim-status-badge').innerText = `Simulasi Aktif: ${timeValue}`;
+
+            checkAndTogglePrayerWidget();
+        }
+
+        function resetSimulationTime() {
+            isSimulationActive = false;
+            timeOffsetMinutes = 0;
+            document.getElementById('sim-time-input').value = '';
+            document.getElementById('sim-status-badge').className = "text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-bold inline-block";
+            document.getElementById('sim-status-badge').innerText = "Menggunakan Jam Realtime";
+            checkAndTogglePrayerWidget();
+        }
+
+        const daysMap = [
+            { index: 1, name: 'Senin' }, { index: 2, name: 'Selasa' }, { index: 3, name: 'Rabu' },
+            { index: 4, name: 'Kamis' }, { index: 5, name: 'Jum’at' }, { index: 6, name: 'Sabtu' }, { index: 0, name: 'Ahad' }
+        ];
+
+        function renderDayTabs() {
+            const tabsContainer = document.getElementById('day-tabs');
+            const todayIndex = getEffectiveDate().getDay();
+            tabsContainer.innerHTML = '';
+
+            daysMap.forEach(day => {
+                const isToday = day.index === todayIndex;
+                const isActive = day.index === activeEditDayIndex;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => selectEditDay(day.index);
+                btn.className = `px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-2 ${
+                    isActive ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                } ${isToday ? 'border border-emerald-400/50' : ''}`;
+
+                btn.innerHTML = `
+                    <span>${day.name}</span>
+                    ${isToday ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded font-extrabold">HARI INI</span>' : ''}
+                `;
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        function selectEditDay(dayIndex) {
+            activeEditDayIndex = dayIndex;
+            renderDayTabs();
+            renderPrayerTimeInputs();
+        }
+
+        function renderPrayerTimeInputs() {
+            const container = document.getElementById('prayer-time-inputs');
+            const titleEl = document.getElementById('active-day-title');
+            const currentDayData = jadwalData[activeEditDayIndex] || defaultJadwal[activeEditDayIndex];
+
+            titleEl.innerHTML = `<i class="fa-regular fa-calendar-check"></i> Edit Hari ${currentDayData.dayName}`;
+            container.innerHTML = '';
+
+            const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+
+            // ====== DISPLAY FULLSCREEN ======
+const p = highlightPrayer; 
+
+if (p) {
+    const item = todayJadwal[p] || { time: '--:--', imam: '-', badal1: '-', badal2: '-' };
+
+    const row = document.createElement('div');
+    row.className = `p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 transition-all bg-emerald-950/90 border-2 border-emerald-400 shadow-xl w-full`;
+
+    row.innerHTML = `
+        <!-- Bagian Kiri: Nama Shalat -->
+        <div class="flex items-center gap-4 min-w-[150px] self-start sm:self-center">
+            <span class="w-4 h-4 rounded-full bg-amber-400 animate-ping"></span>
+            <div>
+                <span class="font-black text-emerald-300 text-xl md:text-2xl block tracking-wide uppercase leading-tight">${p}</span>
+            </div>
+        </div>
+
+        <!-- Bagian Kanan: Nama Imam & Area Badal -->
+        <div class="w-full sm:w-auto flex-1 flex flex-col items-center sm:items-end gap-3">
+            <div class="text-right">
+                <div class="text-xs text-emerald-400 uppercase font-bold tracking-wider mb-0.5">Imam Utama</div>
+                <div class="font-black text-white text-xl md:text-3xl tracking-wide text-center sm:text-right">${item.imam}</div>
+            </div>
+
+            <!-- Area Badal -->
+            <div class="w-full grid grid-cols-2 gap-4 text-center text-sm md:text-base text-slate-300 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 mt-1">
+                <div class="border-r border-slate-800 pr-2">
+                    <span class="block text-xs text-slate-400 uppercase font-medium mb-1">Badal 1</span>
+                    <strong class="text-amber-300 font-bold text-base md:text-lg">${item.badal1 || '-'}</strong>
+                </div>
+                <div class="pl-2">
+                    <span class="block text-xs text-slate-400 uppercase font-medium mb-1">Badal 2</span>
+                    <strong class="text-emerald-400 font-bold text-base md:text-lg">${item.badal2 || '-'}</strong>
+                </div>
+            </div>
+        </div>
+    `;
+    listContainer.appendChild(row);
+} else {
+    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu shalat berikutnya...</div>`;
+}
+
+// =================================
+
+        }
+
+        function saveJadwalImam() {
+            const currentDayData = jadwalData[activeEditDayIndex] || { dayName: defaultJadwal[activeEditDayIndex].dayName };
+            const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+
+            prayers.forEach(p => {
+                const timeVal = document.getElementById(`input-${activeEditDayIndex}-${p}-time`).value;
+                const imamVal = document.getElementById(`input-${activeEditDayIndex}-${p}-imam`).value;
+                const badal1Val = document.getElementById(`input-${activeEditDayIndex}-${p}-badal1`).value;
+                const badal2Val = document.getElementById(`input-${activeEditDayIndex}-${p}-badal2`).value;
+
+                currentDayData[p] = { time: timeVal, imam: imamVal, badal1: badal1Val, badal2: badal2Val };
+            });
+
+            jadwalData[activeEditDayIndex] = currentDayData;
+            saveData();
+            checkAndTogglePrayerWidget();
+            alert(`Jadwal Imam berhasil disimpan!`);
+        }
+
+        function resetDefaultJadwal() {
+            if (confirm("Reset jadwal ke awal?")) {
+                jadwalData = JSON.parse(JSON.stringify(defaultJadwal));
+                saveData();
+                renderPrayerTimeInputs();
+                checkAndTogglePrayerWidget();
+            }
+        }
+
+        function checkAndTogglePrayerWidget() {
+            const containerJadwal = document.getElementById('display-jadwal-container');
+            const containerSlideshow = document.getElementById('display-slideshow-container');
+            const containerRunningBar = document.getElementById('display-running-bar');
+            const statusEl = document.getElementById('sim-widget-status');
+
+            const now = getEffectiveDate();
+            const todayIndex = now.getDay();
+            const todayJadwal = jadwalData[todayIndex] || defaultJadwal[todayIndex];
+            const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let activePrayer = null;
+
+            prayers.forEach(p => {
+                if (todayJadwal[p] && todayJadwal[p].time) {
+                    const [h, m] = todayJadwal[p].time.split(':').map(Number);
+                    const prayerMinutes = h * 60 + m;
+
+                    if (currentMinutes >= (prayerMinutes - 15) && currentMinutes <= (prayerMinutes + 15)) {
+                        activePrayer = p;
+                    }
+                }
+            });
+
+            if (activePrayer) {
+                if (containerSlideshow) containerSlideshow.classList.add('hidden');
+                if (containerRunningBar) containerRunningBar.classList.add('hidden');
+                if (containerJadwal) containerJadwal.classList.remove('hidden');
+
+                populateDisplayWidget(activePrayer);
+                stopSlideshow();
+
+                if (statusEl) {
+                    statusEl.className = "text-xs font-bold text-emerald-400";
+                    statusEl.innerText = `MODE SHALAT (${activePrayer}) - Slide & Running Text Mati`;
+                }
+            } else {
+                if (containerSlideshow) containerSlideshow.classList.remove('hidden');
+                if (containerRunningBar) containerRunningBar.classList.remove('hidden');
+                if (containerJadwal) containerJadwal.classList.add('hidden');
+
+                const displayMode = document.getElementById('display-mode');
+                if (displayMode && !displayMode.classList.contains('hidden')) {
+                    if (!slideTimer) startSlideshow();
+                }
+
+                if (statusEl) {
+                    statusEl.className = "text-xs font-bold text-slate-400";
+                    statusEl.innerText = "MODE STANDBY - Slide & Running Text Aktif";
+                }
+            }
+        }
+
+        function populateDisplayWidget(highlightPrayer) {
+            const today = getEffectiveDate();
+            const todayIndex = today.getDay();
+            const todayJadwal = jadwalData[todayIndex] || defaultJadwal[todayIndex];
+
+            const listContainer = document.getElementById('display-jadwal-list');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '';
+            const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+
+            // Mengambil hanya 1 waktu shalat yang sedang aktif/tiba
+const p = highlightPrayer; 
+
+if (p) {
+    const item = todayJadwal[p] || { time: '--:--', imam: '-', badal1: '-', badal2: '-' };
+    
+    const row = document.createElement('div');
+    // Desain dibuat full-width dan teks lebih besar karena hanya tampil sendiri
+    row.className = `p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 transition-all bg-emerald-950/90 border-2 border-emerald-400 shadow-xl w-full`;
+
+    row.innerHTML = `
+        <!-- Bagian Kiri: Nama Shalat & Jam Adzan (Diperbesar) -->
+        <div class="flex items-center gap-4 min-w-[180px]">
+            <span class="w-4 h-4 rounded-full bg-amber-400 animate-ping"></span>
+            <div>
+                <span class="font-black text-emerald-300 text-xl md:text-2xl block tracking-wide uppercase">${p}</span>
+                					
+				
+            </div>
+        </div>
+        
+        <!-- Bagian Kanan: Nama Imam & Badal (Diperbesar) -->
+        <div class="text-center sm:text-right">
+            <div class="text-xs text-emerald-400 uppercase font-bold tracking-wider mb-1">Imam Utama</div>
+            <div class="font-black text-white text-xl md:text-3xl tracking-wide">${item.imam}</div>
+            
+            <!-- Petugas Cadangan / Badal -->
+            <div class="text-xs md:text-sm text-slate-300 flex items-center justify-center sm:justify-end gap-3 mt-3 bg-slate-950/40 px-4 py-2 rounded-xl border border-slate-800">
+                <span> <strong class="text-amber-300 font-semibold">${item.badal1 || '-'}</strong></span>
+                <span class="text-slate-600">|</span>
+                <span> <strong class="text-emerald-400 font-semibold">${item.badal2 || '-'}</strong></span>
+            </div>
+        </div>
+    `;
+    listContainer.appendChild(row);
+} else {
+    // Pengaman jika highlightPrayer kosong/tidak terdeteksi
+    listContainer.innerHTML = `<div class="text-center text-slate-400 p-4">Menunggu waktu shalat berikutnya...</div>`;
+}
+
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagesList.push({
+                        id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                        title: file.name.replace(/\.[^/.]+$/, ""),
+                        dataUrl: e.target.result,
+                        active: true
+                    });
+                    saveData();
+                    renderGallery();
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById('image-grid');
+            const emptyState = document.getElementById('empty-state');
+            const statTotal = document.getElementById('stat-total');
+
+            grid.innerHTML = '';
+            statTotal.innerText = imagesList.length;
+
+            if (imagesList.length === 0) {
+                emptyState.classList.remove('hidden');
+                grid.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.classList.remove('hidden');
+
+            imagesList.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `bg-slate-950 border ${item.active ? 'border-emerald-500/40' : 'border-slate-800 opacity-60'} rounded-xl overflow-hidden flex flex-col justify-between transition hover:border-emerald-500 group`;
+
+                card.innerHTML = `
+                    <div class="relative h-40 bg-black/40 overflow-hidden flex items-center justify-center">
+                        <img src="${item.dataUrl}" alt="${item.title}" class="w-full h-full object-cover">
+                        <span class="absolute top-2 left-2 bg-slate-900/80 text-slate-200 text-xs px-2 py-0.5 rounded-md font-mono">#${index + 1}</span>
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                            <button onclick="toggleActive('${item.id}')" class="w-9 h-9 ${item.active ? 'bg-emerald-600' : 'bg-slate-800'} text-white rounded-lg flex items-center justify-center">
+                                <i class="fa-solid ${item.active ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                            </button>
+                            <button onclick="deleteImage('${item.id}')" class="w-9 h-9 bg-rose-600 text-white rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-900 flex items-center justify-between gap-2 border-t border-slate-800">
+                        <input type="text" value="${item.title}" onchange="updateTitle('${item.id}', this.value)" class="bg-transparent text-xs text-slate-200 font-medium truncate w-full focus:bg-slate-950 focus:px-2 focus:py-1 focus:rounded focus:outline-none focus:border-emerald-500">
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleActive(id) {
+            const img = imagesList.find(item => item.id === id);
+            if (img) { img.active = !img.active; saveData(); renderGallery(); }
+        }
+
+        function updateTitle(id, newTitle) {
+            const img = imagesList.find(item => item.id === id);
+            if (img) { img.title = newTitle; saveData(); }
+        }
+
+        function deleteImage(id) {
+            imagesList = imagesList.filter(item => item.id !== id);
+            saveData();
+            renderGallery();
+        }
+
+        function clearAllImages() {
+            if (confirm("Hapus semua gambar slide?")) {
+                imagesList = [];
+                saveData();
+                renderGallery();
+            }
+        }
+
+        function updateDuration(val) {
+            let parsed = parseInt(val);
+            if (isNaN(parsed) || parsed < 1) parsed = 1;
+            
+            slideDuration = parsed;
+            localStorage.setItem('mosque_slide_duration', slideDuration);
+
+            const displayMode = document.getElementById('display-mode');
+            if (displayMode && !displayMode.classList.contains('hidden')) {
+                startSlideshow();
+            }
+        }
+
+        function saveRunningText() {
+            const text = document.getElementById('running-text-input').value;
+            localStorage.setItem('mosque_running_text', text);
+            document.getElementById('display-running-text').innerText = text;
+            alert("Running text berhasil diperbarui!");
+        }
+
+        // EDIT GAMBAR SAMPLE BAWAAN DI SINI
+        function loadSampleImages() {
+            const samples = [
+                { id: 's1', title: 'Jadwal Kajian', dataUrl: 'https://images.unsplash.com/photo-1542816417-0983cbe82752?q=80&w=1280&auto=format&fit=crop', active: true },
+                { id: 's2', title: 'Sedekah Subuh', dataUrl: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?q=80&w=1280&auto=format&fit=crop', active: true }
+            ];
+            imagesList = [...imagesList, ...samples];
+            saveData();
+            renderGallery();
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('mosque_images_list', JSON.stringify(imagesList));
+                localStorage.setItem('mosque_jadwal_imam', JSON.stringify(jadwalData));
+            } catch (e) {}
+        }
+
+        function loadSavedData() {
+            const savedImages = localStorage.getItem('mosque_images_list');
+            if (savedImages) {
+                try { imagesList = JSON.parse(savedImages); } catch (e) { imagesList = []; }
+            } else loadSampleImages();
+
+            const savedJadwal = localStorage.getItem('mosque_jadwal_imam');
+            if (savedJadwal) {
+                try { jadwalData = JSON.parse(savedJadwal); } catch (e) { jadwalData = JSON.parse(JSON.stringify(defaultJadwal)); }
+            } else jadwalData = JSON.parse(JSON.stringify(defaultJadwal));
+
+            const savedDuration = localStorage.getItem('mosque_slide_duration');
+            if (savedDuration) {
+                slideDuration = parseInt(savedDuration) || 7;
+                document.getElementById('slide-duration').value = slideDuration;
+            }
+
+            const savedText = localStorage.getItem('mosque_running_text');
+            if (savedText) {
+                document.getElementById('running-text-input').value = savedText;
+                document.getElementById('display-running-text').innerText = savedText;
+            }
+        }
+
+        function toggleMode(mode) {
+            const adminPanel = document.getElementById('admin-panel');
+            const displayMode = document.getElementById('display-mode');
+
+            if (mode === 'display') {
+                adminPanel.classList.add('hidden');
+                displayMode.classList.remove('hidden');
+                displayMode.classList.add('flex');
+
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+
+                checkAndTogglePrayerWidget();
+            } else {
+                displayMode.classList.add('hidden');
+                displayMode.classList.remove('flex');
+                adminPanel.classList.remove('hidden');
+
+                if (document.exitFullscreen && document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+                stopSlideshow();
+            }
+        }
+
+        function startSlideshow() {
+            stopSlideshow();
+            showNextSlide();
+            slideTimer = setInterval(showNextSlide, slideDuration * 1000);
+        }
+
+        function stopSlideshow() {
+            if (slideTimer) {
+                clearInterval(slideTimer);
+                slideTimer = null;
+            }
+        }
+
+        function showNextSlide() {
+            const activeImages = imagesList.filter(img => img.active);
+            const imgEl = document.getElementById('display-img');
+            const emptyMsg = document.getElementById('display-empty-msg');
+
+            if (activeImages.length === 0) {
+                imgEl.classList.add('hidden');
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+
+            imgEl.classList.remove('hidden');
+            emptyMsg.classList.add('hidden');
+
+            if (currentSlideIndex >= activeImages.length) {
+                currentSlideIndex = 0;
+            }
+
+            imgEl.style.opacity = '0';
+            setTimeout(() => {
+                imgEl.src = activeImages[currentSlideIndex].dataUrl;
+                imgEl.style.opacity = '1';
+                currentSlideIndex++;
+            }, 300);
+        }
+
+        function startLiveClock() {
+            const clockEl = document.getElementById('live-clock');
+            const dateEl = document.getElementById('live-date');
+
+            const updateClock = () => {
+                const now = getEffectiveDate();
+                clockEl.innerText = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+                dateEl.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                checkAndTogglePrayerWidget();
+            };
+
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') toggleMode('admin');
+        });
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker terdaftar!', reg))
+            .catch(err => console.error('Gagal daftar Service Worker:', err));
+        });
+      }
+    </script>
+</body>
+</html>
